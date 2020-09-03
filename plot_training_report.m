@@ -64,11 +64,11 @@ cc = mod(rr-1,length(clrset))+1;
 linestr = [markers{mm} '-'];
 xstr = sprintf('sessions from %s', datestr(today,29));
 
-if ~isempty(res.n_valid_trials)
+if ~isempty(res.n_total_trials)
 % plot the trial counts
 datesx = res.dates - today;
 %plot(datesx, res.n_total_trials,'.-');
-plh(1,rr) = plot(s(1),datesx, res.n_valid_trials,linestr,...
+plh(1,rr) = plot(s(1),datesx, res.n_total_trials,linestr,...
     'linewidth',lw, 'color', clrset{cc},'markerfacecolor','w');
 
 %plot(datesx, res.frac_hit.*res.n_valid_trials, '.-');
