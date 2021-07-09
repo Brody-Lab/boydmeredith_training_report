@@ -46,11 +46,9 @@ for rr = 1:length(ratnames)
     if iscell(hostname)
         hostname = hostname{1}(4:5);
     end
-    if n_done == 0
-        n_valid = round(n_done.*(1-viol));
-    else
-        n_valid = nan;
-    end
+
+    n_valid = round(n_done.*(1-viol));
+
     %prot = prot{1};
     
     vol = nan; rate = nan; rbias = nan; hard_gamma = nan; easy_gamma = nan; rat = nan; t_min = nan; t_max = nan;
@@ -65,6 +63,10 @@ for rr = 1:length(ratnames)
         rate       = settings.saved.PBupsSection_total_rate;
         t_min       = settings.saved.PBupsSection_T_min;
         t_max       = settings.saved.PBupsSection_T_max;
+        bups_type   = settings.saved.PBupsSection_task_type;
+        if bups_type ==0
+            prot = 'PBupsFrq';
+        end
         if strncmp(prot, 'PBupsWT',7)
             nic_dur = settings.saved.StimulusSection_NICDur;
             lcb = settings.saved.StimulusSection_LegalCBreak;

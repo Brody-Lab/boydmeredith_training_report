@@ -5,20 +5,15 @@ the_datenum = [];
 if nargin < 2
     datenum_in = [];
 end
-max_depth = 20;
-
+theyear = year(today);
+theyear(1:2) = [];
+themonth = datestr(today,6);
 
 exptr = 'Tyler';
-files = [];
-ii=0;
-while isempty(files) & ii < max_depth
-    fpatt = sprintf(['/Volumes/brody/RATTER/SoloData/Settings/%s/%s/'...
-    'settings_*%s*'],...
-    exptr, ratname, datestr(today-ii,'yymmdd'));
-    files = dir(fpatt);
-    ii = ii + 1;
-end
-
+fpatt = sprintf(['/Volumes/brody/RATTER/SoloData/Settings/%s/%s/'...
+    'settings_*'],...
+    exptr, ratname);
+files = dir(fpatt);
 if isempty(files)
     return 
 end
