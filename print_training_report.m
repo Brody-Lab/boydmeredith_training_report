@@ -12,8 +12,8 @@ else
     date_in = datenum(datestr(date_in,29));
 end
 
-sprintf('rat  prot\t\b\bday/hr\t nic  [tmin-tmax] lcb\teasy/hard  vol  rate\tnvalid\t perf(rbias)viol\trig\tmax/stage  ')
-format_str = '%s %s\t\b%i/%1.2f\t %.2f [%.2f-%.2f] %.3f\t %.1f/%.1f   %.2f  %i \t  %03i\t   %2.f (%2.f) %2.f    \t%s\t%02i/%s\n';
+sprintf('rat  prot\t\b\bday/hr\t nic  [tmin-tmax] lcb\teasy/hard  vol  rate\tnvalid(ntotal)\t perf(rbias)viol\trig\tmax/stage  ')
+format_str = '%s %s\t\b%i/%1.2f\t %.2f [%.1f-%.1f] %.3f\t %.1f/%.1f   %.2f  %i \t  %03i(%03i)\t   %2.f (%2.f) %2.f    \t%s\t%02i/%s\n';
 for rr = 1:length(ratnames)
     %try
     [settings, stageName, the_date, endStageName, nStages, prot, start_t, end_t]=...
@@ -88,7 +88,7 @@ for rr = 1:length(ratnames)
         %%
         fprintf(format_str,ratnames{rr},prot,...
             today-the_date, elapsed_t, nic_dur,t_min, t_max, lcb, ...
-            easy_gamma, hard_gamma, vol, rate, n_valid(1), perf(1)*100, ...
+            easy_gamma, hard_gamma, vol, rate, n_valid(1), n_done, perf(1)*100, ...
             rbias(1)*100, viol(1)*100, hostname, nStages, stageName)
     end
     %     catch
