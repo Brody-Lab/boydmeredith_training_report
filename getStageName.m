@@ -15,6 +15,10 @@ else
     [settings, theDate] = loadNewestSettings(ratname,the_date);
 end
 
+if isempty(settings)
+    return
+end
+
 [stageName, endStageName, nStages, prot, start_t, end_t]...
     = getActiveStageName(settings);
 
