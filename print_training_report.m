@@ -19,6 +19,10 @@ for rr = 1:length(ratnames)
     [settings, stageName, the_date, endStageName, nStages, prot, start_t, end_t]=...
         getStageName(ratnames{rr},date_in);
     
+    if isempty(settings)
+        continue
+    end
+    
     [sessid, n_done, sessdatestrs, ...
         perf, rightPerf, leftPerf, viol, hostname, prot_] = bdata(['select '...
         'sessid, n_done_trials, sessiondate, '...
@@ -26,15 +30,22 @@ for rr = 1:length(ratnames)
         'from sessions where '...
         'sessiondate="{S}" and ratname="{S}"'],...
         datestr(the_date,29),ratnames{rr});
-    if isempty(perf),
-        [sessid, n_done, sessdatestrs, ...
-            perf, rightPerf, leftPerf, viol, hostname, prot_] = bdata(['select '...
-            'sessid, n_done_trials, sessiondate, '...
-            'total_correct, right_correct, left_correct, percent_violations, hostname, protocol '...
-            'from sessions where '...
-            'sessiondate="{S}" and ratname="{S}"'],...
-            datestr(the_date-1,29),ratnames{rr});
-        if isempty(perf)
+    if isempty(n_done) 
+        ndays = 1;
+        for ii = 1:ndays
+            [sessid, n_done, sessdatestrs, ...
+                perf, rightPerf, leftPerf, viol, hostname, prot_] = bdata(['select '...
+                'sessid, n_done_trials, sessiondate, '...
+                'total_correct, right_correct, left_correct, percent_violations, hostname, protocol '...
+                'from sessions where '...
+                'sessiondate="{S}" and ratname="{S}"'],...
+                datestr(the_date-ii,29),ratnames{rr});
+            if ~isempty(n_done)
+                continue
+            end
+        end
+        if isempty(n_done)
+            n_done = nan;
             perf = nan;
             rightPerf =nan;
             leftPerf=nan;
@@ -46,7 +57,18 @@ for rr = 1:length(ratnames)
     if iscell(hostname)
         hostname = hostname{1}(4:5);
     end
-
+    % deal with case where there are multiple sessions from the same day
+    if length(sessid) > 1 
+        %%
+        frac_per    = n_done./sum(n_done);
+        viol        = nansum(viol.*frac_per);
+        perf        = nansum(perf.*frac_per);
+        rightPerf   = nansum(rightPerf.*frac_per);
+        leftPerf    = nansum(leftPerf.*frac_per);
+        n_done      = nansum(n_done);
+    end
+            
+    
     n_valid = round(n_done.*(1-viol));
 
     %prot = prot{1};

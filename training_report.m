@@ -1,9 +1,11 @@
 function res = training_report(ratnames, startDate, endDate, fh)
 
+if isempty(bdata)
+    bdata('connect')
+end
+
 fig_path = '~/projects/rat_training';
-set(0,'units','inches')
-mp      = get(0, 'MonitorPositions');
-max_x   = mp(1,1) + mp(1,3);
+
 
 if nargin < 4
     fh = uifigure(1); clf
@@ -21,17 +23,26 @@ end
 %[fh res] = plot_training_report(ratnames, startDate, endDate, fh)
 print_training_report(ratnames, endDate);
 %%
-nrats = length(ratnames);
 f = figure(1); clf
-fw = 8.5;
-fht = 11;
+set(0,'units','inches')
+mp      = get(0, 'MonitorPositions');
+max_x   = mp(1,1) + mp(1,3);
+%%
+nrats = length(ratnames);
+fht = 15;
 %fx = mp(1)+mp(1,3)/2-fw/2;
-fx = sum(mp(1,[1 3])) - fw - 1;
-set(f , 'position',   [fx 1  fw fht])
 warning('off')
 ndays = 7;
+nrows = 5;
+ncols = ceil(nrats/nrows)
+fw    = 3.5*ncols;
+fx    = sum(mp(1,[1 3])) - fw - 1;
+%
+
+set(f , 'position',   [fx 1  fw fht])
+%%
 for rr = 1:nrats
-    ax = subplot(4,ceil(nrats/4),rr);
+    ax = subplot(nrows,ncols,rr);
     try
         plotPsychometricRat(ratnames{rr},...
             'daterange',ndays,'type','delta','ax',ax);
