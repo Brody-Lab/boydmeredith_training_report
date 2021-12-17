@@ -38,6 +38,10 @@ if isempty(datenum_in)
 else
     date_list = datenum(datestr(date_list,29));
     [date_ind] = find(date_list==datenum_in);
+    if isempty(date_ind)
+        settings = [];
+        return
+    end
     date_ind = date_ind(end);
     the_datenum = datenum_in;
 end

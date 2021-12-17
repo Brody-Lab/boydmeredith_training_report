@@ -2,8 +2,14 @@ function [activeStageName, finalStageName, nStages, prot, start_t,end_t]...
     = getActiveStageName(settings)
 prot = '       ';
 if ~isempty(settings.saved.SessionDefinition_training_stages)
-    activeStageName = settings.saved.SessionDefinition_training_stages{...
-        settings.saved.SessionDefinition_active_stage,4};
+    activeStagenum = settings.saved.SessionDefinition_active_stage;
+    stageNames = {settings.saved.SessionDefinition_training_stages{:,4}};
+    if activeStagenum > length(stageNames)
+        activeStageName = sprintf('%i not defined',activeStagenum)
+    else
+        activeStageName = stageNames{activeStagenum};
+    end
+    
     finalStageName  = settings.saved.SessionDefinition_training_stages{...
         end,4};
     nStages = size(settings.saved.SessionDefinition_training_stages,1);

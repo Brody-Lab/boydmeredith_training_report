@@ -3,11 +3,19 @@ p = inputParser;
 addParameter(p, 'protocols', {'ProAnti3', 'PBups', 'PBupsWT'})
 parse(p,varargin{:})
 
+end_datenum = today;
+
 if isempty(start_date)
    sessdates = bdata(['select sessiondate from sessions'...
        ' where ratname="{S}"'], ratname);
+   if isempty(sessdates)
+       return;
+   end
    start_date = sessdates{1};
+   end_datenum = datenum(sessdates{end});
+
 end
+end_date = datestr(end_datenum,29);
 
 savedir = '~/projects/rat_training/';
 savepath = fullfile(savedir, [ratname '_stages.mat']);
@@ -25,7 +33,7 @@ settings_dir = '/Volumes/brody/RATTER/SoloData/Settings/';
 if ~exist(settings_dir,'dir')
     error('can''t find ratter. is brody drive mounted?')
 end
-end_datenum = today;
+
 
 start_datenum = datenum(start_date);
 ndays = end_datenum - start_datenum + 1;
