@@ -18,10 +18,12 @@ addParameter(p, 'fignum', 1);
 addParameter(p, 'protocols', []); % a list of protocols to include in plot e.g. {'ProAnti3','PBups'}
 addParameter(p, 'end_date', []);
 addParameter(p, 'list_stages', 1);
-% NEW USERS CHANGE THESE DEFAULT ARGUMENTS
+% NEW USERS SHOULD CHANGE THESE DEFAULT ARGUMENTS
 addParameter(p, 'experimenter','Tyler')
+addParameter(p, 'brodydir', '/Volumes/brody');
 addParameter(p, 'figsavedir', '~/projects/rat_training/figures');
 addParameter(p, 'datasavedir', '~/projects/rat_training/');
+%---
 parse(p, varargin{:});
 par = p.Results;
 fn = par.fignum;
@@ -46,7 +48,7 @@ end
 par = p.Results;
 res = get_training_stages(ratname, start_date, ...
     'experimenter', par.experimenter, 'protocols', par.protocols,...
-    'end_date', par.end_date, 'savedir', par.datasavedir);
+    'end_date', par.end_date, 'savedir', par.datasavedir, 'brodydir', par.brodydir);
 
 % find dates from file that should be plotted
 stagenums = res.stagenums;

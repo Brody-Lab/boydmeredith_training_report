@@ -13,7 +13,7 @@ p = inputParser;
 addParameter(p, 'end_date', [])
 addParameter(p, 'protocols', {'ProAnti3', 'PBups', 'PBupsWT'})
 addParameter(p, 'savedir', '~/projects/rat_training/');
-addParameter(p, 'brody_dir', '/Volumes/brody');
+addParameter(p, 'brodydir', '/Volumes/brody');
 addParameter(p, 'experimenter', 'Tyler');
 addParameter(p, 'savename', '');
 addParameter(p, 'overwrite', 0);
@@ -44,7 +44,7 @@ if exist(savepath, 'file') & ~p.Results.overwrite
 end
 
 % check that settings files are accessible
-settings_dir = fullfile(p.Results.brody_dir,'RATTER/SoloData/Settings/');
+settings_dir = fullfile(p.Results.brodydir,'RATTER/SoloData/Settings/');
 if ~exist(settings_dir,'dir')
     error('can''t find ratter. is brody drive mounted?')
 end
