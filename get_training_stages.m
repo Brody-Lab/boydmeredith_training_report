@@ -1,43 +1,116 @@
 function res = get_training_stages(ratname, start_date, varargin)
+% function res = get_training_stages(ratname, start_date, varargin) Gets a
+%
+% Get a list of training stage name, number and protocol for every day from
+% start_date to now for subject ratname
+%
+% res = get_training_stages('Z255', '2016-12-11','end_date','2017-12-11')
+%
+%
+
+% parse optional arguments
 p = inputParser;
+addParameter(p, 'end_date', [])
 addParameter(p, 'protocols', {'ProAnti3', 'PBups', 'PBupsWT'})
+addParameter(p, 'savedir', '~/projects/rat_training/');
+addParameter(p, 'brody_dir', '/Volumes/brody');
+addParameter(p, 'experimenter', 'Tyler');
+addParameter(p, 'savename', '');
+addParameter(p, 'overwrite', 0);
 parse(p,varargin{:})
 
-end_datenum = today;
-
-if isempty(start_date)
-   sessdates = bdata(['select sessiondate from sessions'...
-       ' where ratname="{S}"'], ratname);
-   if isempty(sessdates)
-       return;
-   end
-   start_date = sessdates{1};
-   end_datenum = datenum(sessdates{end});
-
+% set path where results should be saved
+savename = p.Results.savename;
+if isempty(savename)
+    savename = [ratname '_stages.mat'];
 end
-end_date = datestr(end_datenum,29);
+savepath = fullfile(p.Results.savedir, savename);
+fprintf('Looking for saved training stages file for %i',ratname);
 
-savedir = '~/projects/rat_training/';
-savepath = fullfile(savedir, [ratname '_stages.mat']);
-if exist(savepath, 'file')
-    start_date_in = start_date;
-    load(savepath)
-    start_date = res.start_date;
-    if datenum(start_date_in) == datenum(start_date)
-        return;
-    end
+% check to see if this file alreay exists
+if exist(savepath, 'file') & ~p.Results.overwrite
+    load(savepath,'res')
+    if isempty(start_date)
+        fprintf('returning existing file for this daterange');
+        return
+    elseif datenum(start_date) >= datenum(res.start_date)
+        fprintf('existing file contains this daterange. returning existing file.');
+        return 
+    else
+       fprintf(['existing file doesn''t cover this daterange.\n'...
+           'we should probably be careful about only getting the dates we don''t have '...
+           'but instead we''ll just go ahead and recompute']);
+    end 
 end
 
-% build file list 
-settings_dir = '/Volumes/brody/RATTER/SoloData/Settings/';
+% check that settings files are accessible
+settings_dir = fullfile(p.Results.brody_dir,'RATTER/SoloData/Settings/');
 if ~exist(settings_dir,'dir')
     error('can''t find ratter. is brody drive mounted?')
 end
+settings_dir = fullfile(settings_dir, p.Results.experimenter, ratname);
 
+% set start_date. if not supplied, will load all dates for rat
+start_datenum = [];
+end_datenum = [];
+if nargin < 2
+    start_date = [];
+end
+if ~isempty(start_date)
+    start_datenum = datenum(start_date);
+end
 
-start_datenum = datenum(start_date);
+% set end_date
+end_date = p.Results.end_date;
+if ~isempty(end_datenum)
+    end_datenum = datenum(end_date);
+end
+
+% build list of settings files
+fprintf(['hold on to your hat while we look through all '...
+    'the settings files for %s'],ratname)
+if ~isempty(start_date)
+    fprintf( 'between %s and %s.\n', start_date, end_date)
+end
+
+%% get list of all files in settings dir
+files = dir(fullfile(settings_dir, 'settings*'));
+
+% convert the file list to dates in iso formats and the letter used to
+% determine which file is used as the settings file
+get_settings_dateletter = @(name) name(regexp(name, '\d\d\d\d\d\d\S.mat')+(0:6));
+get_settings_dateiso = @(datlett) sprintf('20%s-%s-%s', datlett(1:2), datlett(3:4), datlett(5:6));
+get_settings_protocol = @(name) regexp(name, '(?<=@)[^_]+(?=_)', 'match');
+
+settings_datelett = cellfun(@(x) get_settings_dateletter(x), {files.name},'uniformoutput',0);
+settings_dateiso = cellfun(@(x) get_settings_dateiso(x), settings_datelett, 'uniformoutput', 0);
+settings_datenum = datenum(settings_dateiso);
+settings_lett = cellfun(@(x) x(end), settings_datelett, 'uniformoutput', 0);
+settings_prot = cellfun(@(x) get_settings_protocol(x), {files.name});
+
+% figure out which files are from the appropriate date range and protocol
+if isempty(start_datenum) 
+    start_datenum = min(settings_datenum);
+end
+start_date = datestr(start_datenum,29);
+
+if isempty(end_datenum)
+    end_datenum = max(settings_datenum);
+end
+end_date = datestr(end_datenum,29);
+
+if ~isempty(p.Results.protocols)
+    good_prot = ismember(settings_prot, p.Results.protocols);
+else
+    good_prot = true(size(settings_prot));
+end
+good_dates = (settings_datenum >= start_datenum) & (settings_datenum <= end_datenum);
+good_files = good_dates(:) & good_prot(:);
+unique_datenums = unique(settings_datenum(good_files));
+unique_protocols = unique(settings_prot(good_files));
+
+% initialize variables to store outputs
 ndays = end_datenum - start_datenum + 1;
-the_date  = start_datenum;
 datenums = nan(ndays,1);
 stagenums = nan(ndays,1);
 maxstages = nan(ndays,1);
@@ -45,32 +118,46 @@ stagenames = cell(ndays,1);
 prots = cell(ndays,1);
 protnums = nan(ndays,1);
 
-for dd = 1:ndays
-    if mod(dd,10)==1,
-        fprintf('\nworking on day %i of %i\n', dd, ndays);
-    end
-    [settings, stageName, ~, endStageName, nStages, prot,...
-        start_t, end_t] = getStageName(ratname,the_date);
-    the_date = the_date + 1;
-    
-    if ~isempty(settings)
-        temp = regexp(stageName, '\d+','match');
-        stagenum = str2num(temp{1});
-        stagenums(dd) = stagenum;
-        temp = regexp(stageName, '\d+','match');
-        stagemax = str2num(temp{1});
-        maxstages(dd) = stagemax;
-        datenums(dd) = the_date;
-        prot = strjoin(regexp(prot, '\w', 'match'),'');
-        prots{dd} = prot;
-        protnums(dd) = find(ismember(p.Results.protocols,prot));
-        stagenames{dd} = stageName;
+% look at all settings files and save
+datei = unique_datenums-start_datenum + 1;
+fprintf('\nworking through %i dates\n',length(unique_datenums));
+for dd = 1:length(unique_datenums)
+    if mod(dd,10)==0
+        fprintf('%i...',dd);
+    end    
+    this_date = unique_datenums(dd);
+    di = datei(dd);
+    thisidx = find(settings_datenum == this_date);
+    % grab file with largest final character (e.g. 161112b not 161112a)
+    [~, maxidx] = max([settings_lett{thisidx}]);
+    thisidx = thisidx(maxidx);
+    this_file = fullfile(files(thisidx).folder, files(thisidx).name);
+    settings = load(this_file, 'saved');
+    prot = get_settings_protocol(this_file);
+    [stageName, endStageName, nStages, ~, start_t, end_t]...
+        = getActiveStageName(settings);
+    if ~isempty(stageName)
+        tempstagenum = regexp(stageName, '\d+','match');
+        if ~isempty(tempstagenum)
+            stagenum = str2num(tempstagenum{1});
+        else
+            stagenum = 0;
+            stageName = strcat('0 ',stageName);
+        end
     else
-        prots{dd} = '';
+        stageName = 'undefined';
+        stagenum = -1;
     end
-    
+    protnums(di) = find(ismember(unique_protocols,prot));
+    prots{di} = prot{1};
+    datenums(di) = this_date;
+    stagenames{di} = stageName;
+    stagenums(di) = stagenum;
+    maxstages(di) = nStages;
 end
+
 res.start_date = start_date;
+res.end_date = end_date;
 res.stagenums = stagenums;
 res.stagenames = stagenames;
 res.datenums = datenums;
