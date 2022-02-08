@@ -16,12 +16,12 @@ end
 if nargin < 2
     startDate = [];
 end
-if nargin < 1
+if nargin < 1 | isempty(ratnames)
     ratnames = get_ratnames;
 end
 
 %[fh res] = plot_training_report(ratnames, startDate, endDate, fh)
-print_training_report(ratnames, endDate);
+print_training_report(ratnames, endDate, 10);
 %%
 f = figure(1); clf
 set(0,'units','inches')
@@ -34,7 +34,7 @@ fht = 15;
 warning('off')
 ndays = 7;
 nrows = 5;
-ncols = ceil(nrats/nrows)
+ncols = ceil(nrats/nrows);
 fw    = 3.5*ncols;
 fx    = sum(mp(1,[1 3])) - fw - 1;
 %

@@ -1,4 +1,4 @@
-function print_training_report(ratnames, date_in)
+function print_training_report(ratnames, date_in, ndays)
 
 if nargin < 1 || isempty(ratnames)
     [ratnames, experimenter] = get_ratnames;
@@ -8,8 +8,13 @@ end
 
 if nargin < 2 || isempty(date_in)
     date_in = [];
+    date_in = today;
 else
     date_in = datenum(datestr(date_in,29));
+end
+
+if nargin < 3
+    ndays = 14;
 end
 
 sprintf('rat  prot\t\b\bday/hr\t nic  [tmin-tmax] lcb\teasy/hard  vol  rate\tnvalid(ntotal)\t perf(rbias)viol\trig\tmax/stage  ')
@@ -17,7 +22,7 @@ format_str = '%s %s\t\b%i/%1.2f\t %.2f [%.1f-%.1f] %.3f\t %.1f/%.1f   %.2f  %i \
 for rr = 1:length(ratnames)
     %try
     [settings, stageName, the_date, endStageName, nStages, prot, start_t, end_t]=...
-        getStageName(ratnames{rr},date_in);
+        getStageName(ratnames{rr},[],ndays);
     
     if isempty(settings)
         continue
@@ -31,7 +36,7 @@ for rr = 1:length(ratnames)
         'sessiondate="{S}" and ratname="{S}"'],...
         datestr(the_date,29),ratnames{rr});
     if isempty(n_done) 
-        ndays = 1;
+
         for ii = 1:ndays
             [sessid, n_done, sessdatestrs, ...
                 perf, rightPerf, leftPerf, viol, hostname, prot_] = bdata(['select '...
@@ -86,15 +91,17 @@ for rr = 1:length(ratnames)
         t_min       = settings.saved.PBupsSection_T_min;
         t_max       = settings.saved.PBupsSection_T_max;
         bups_type   = settings.saved.PBupsSection_task_type;
-        if bups_type ==0
-            prot = 'PBupsFrq';
-        end
+        
         if strncmp(prot, 'PBupsWT',7)
             nic_dur = settings.saved.StimulusSection_NICDur;
             lcb = settings.saved.StimulusSection_LegalCBreak;
         else
             nic_dur = settings.saved.StimulusSection_nose_in_center;
             lcb = settings.saved.StimulusSection_legal_cbreak;
+        end
+        
+        if bups_type ==0
+            prot = [prot 'F'];
         end
     elseif strncmp(prot,'ProAnti3',8)
         nic_dur = settings.saved.ProAnti3_NICDur;
