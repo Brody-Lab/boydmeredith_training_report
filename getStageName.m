@@ -1,6 +1,12 @@
 function [settings, stageName, theDate, endStageName, nStages, prot,...
-    start_t, end_t] = getStageName(ratname,the_date)
+    start_t, end_t] = getStageName(ratname,the_date,ndays,varargin)
+p = inputParser();
+addParameter('settings_filename',[])
+pase(p,varargin{:});
 
+if nargin<3
+    ndays = 1;
+end
 
 stageName = [];
 endStageName = [];
@@ -9,17 +15,21 @@ prot = [];
 start_t = [];
 end_t = [];
 
-if nargin < 2 || isempty(the_date)
-    [settings, theDate] = loadNewestSettings(ratname);
+if ~isempty(p.Results.settings_filename)
+    fpath = p.Results.settings_filename;
+    settings = load(fpath, 'saved');
+    prot     = regexp(fpath, '(?<=@)[^_]+(?=_)', 'match');
+elseif nargin < 2 || isempty(the_date)
+    [settings, theDate, prot] = loadNewestSettings(ratname,[],ndays);
 else
-    [settings, theDate] = loadNewestSettings(ratname,the_date);
+    [settings, theDate, prot] = loadNewestSettings(ratname,the_date,ndays);
 end
 
 if isempty(settings)
     return
 end
 
-[stageName, endStageName, nStages, prot, start_t, end_t]...
+[stageName, endStageName, nStages, ~, start_t, end_t]...
     = getActiveStageName(settings);
 
 theDate = datenum(datestr(theDate,29));

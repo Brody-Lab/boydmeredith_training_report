@@ -1,23 +1,26 @@
 function [activeStageName, finalStageName, nStages, prot, start_t,end_t]...
     = getActiveStageName(settings)
 prot = '       ';
-if ~isempty(settings.saved.SessionDefinition_training_stages)
-    activeStagenum = settings.saved.SessionDefinition_active_stage;
-    stageNames = {settings.saved.SessionDefinition_training_stages{:,4}};
+savedsettings = settings.saved;
+if ~isempty(savedsettings.SessionDefinition_training_stages)
+    activeStagenum = savedsettings.SessionDefinition_active_stage;
+    stageNames = {savedsettings.SessionDefinition_training_stages{:,4}};
     if activeStagenum > length(stageNames)
-        activeStageName = sprintf('%i not defined',activeStagenum)
+        activeStageName = sprintf('%i not defined',activeStagenum);
     else
         activeStageName = stageNames{activeStagenum};
     end
     
-    finalStageName  = settings.saved.SessionDefinition_training_stages{...
+    finalStageName  = savedsettings.SessionDefinition_training_stages{...
         end,4};
-    nStages = size(settings.saved.SessionDefinition_training_stages,1);
-    f = fieldnames(settings.saved);
+    nStages = size(savedsettings.SessionDefinition_training_stages,1);
+    f = fieldnames(savedsettings);
     where_is_prot=find(cellfun(@(x) ~isempty(x), strfind(f,'prot_title')));
+    
     try
     if ~isempty(where_is_prot)
-        prot_ = settings.saved.(f{where_is_prot});
+        %%
+        prot_ = savedsettings.(f{where_is_prot(1)});
         prot_ = strsplit(prot_);
         prot(1:length(prot_{1})) = prot_{1};
         start_t_ind =  find(~cellfun(@isempty,strfind(prot_,'Started')))+2;
