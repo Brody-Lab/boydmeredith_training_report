@@ -1,8 +1,8 @@
 function [settings, stageName, theDate, endStageName, nStages, prot,...
     start_t, end_t] = getStageName(ratname,the_date,ndays,varargin)
 p = inputParser();
-addParameter('settings_filename',[])
-pase(p,varargin{:});
+addParameter(p, 'settings_filename',[])
+parse(p,varargin{:});
 
 if nargin<3
     ndays = 1;
