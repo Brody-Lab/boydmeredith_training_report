@@ -17,27 +17,38 @@ addParameter(p, 'brodydir', '/Volumes/brody');
 addParameter(p, 'experimenter', 'Tyler');
 addParameter(p, 'savename', '');
 addParameter(p, 'overwrite', 0);
+addParameter(p, 'settings_fields_names',...
+    {'PenaltySection_LegalWaitBreak','LegalWaitBreak',...
+    'PenaltySection_SignalWaitViol', 'SignalWaitViol',...
+    'PenaltySection_TerminateWaitBreak','TerminateWaitBreak',...
+    'DistribInterface_HitWaitDelay_Min','RewDelayMin',...
+    'DistribInterface_HitWaitDelay_Tau','RewDelayTau',...
+    'DistribInterface_HitWaitDelay_Max','RewDelayMax',...
+    'DistribInterface_ErrorWaitDelay_Min','ErrDelayMin',...
+    'DistribInterface_ErrorWaitDelay_Max','ErrDelayMax',...
+    })
 parse(p,varargin{:})
-
+par = p.Results;
 % set path where results should be saved
 savename = p.Results.savename;
 if isempty(savename)
     savename = [ratname '_stages.mat'];
 end
 savepath = fullfile(p.Results.savedir, savename);
-fprintf('Looking for saved training stages file for %i',ratname);
+fprintf('\nLooking for saved training stages file for %i',ratname);
 
 % check to see if this file alreay exists
 if exist(savepath, 'file') & ~p.Results.overwrite
+    %% 
     load(savepath,'res')
     if isempty(start_date)
-        fprintf('returning existing file for this daterange');
+        fprintf('\nreturning existing file for this daterange');
         return
     elseif datenum(start_date) >= datenum(res.start_date)
-        fprintf('existing file contains this daterange. returning existing file.');
+        fprintf('\nexisting file contains this daterange. returning existing file.');
         return 
     else
-       fprintf(['existing file doesn''t cover this daterange.\n'...
+       fprintf(['\nsexisting file doesn''t cover this daterange.\n'...
            'we should probably be careful about only getting the dates we don''t have '...
            'but instead we''ll just go ahead and recompute']);
     end 
@@ -67,8 +78,8 @@ if ~isempty(end_datenum)
 end
 
 % build list of settings files
-fprintf(['hold on to your hat while we look through all '...
-    'the settings files for %s'],ratname)
+fprintf(['\nhold on to your hat while we look through all '...
+    'the settings files for %s '],ratname)
 if ~isempty(start_date)
     fprintf( 'between %s and %s.\n', start_date, end_date)
 end
@@ -110,17 +121,24 @@ unique_datenums = unique(settings_datenum(good_files));
 unique_protocols = unique(settings_prot(good_files));
 
 % initialize variables to store outputs
-ndays = end_datenum - start_datenum + 1;
-datenums = nan(ndays,1);
-stagenums = nan(ndays,1);
-maxstages = nan(ndays,1);
-stagenames = cell(ndays,1);
-prots = cell(ndays,1);
-protnums = nan(ndays,1);
+res         = [];
+ndays       = end_datenum - start_datenum + 1;
+datenums    = nan(ndays,1);
+stagenums   = nan(ndays,1);
+maxstages   = nan(ndays,1);
+stagenames  = cell(ndays,1);
+prots       = cell(ndays,1);
+protnums    = nan(ndays,1);
+% initialize optional fields
+optfields   = par.settings_fields_names;
+for ff = 1:2:length(optfields)
+    res.(optfields{ff+1}) = nan(ndays,1);
+end
 
 % look at all settings files and save
 datei = unique_datenums-start_datenum + 1;
 fprintf('\nworking through %i dates\n',length(unique_datenums));
+
 for dd = 1:length(unique_datenums)
     if mod(dd,10)==0
         fprintf('%i...',dd);
@@ -134,6 +152,7 @@ for dd = 1:length(unique_datenums)
     this_file = fullfile(files(thisidx).folder, files(thisidx).name);
     settings = load(this_file, 'saved');
     prot = get_settings_protocol(this_file);
+    
     [stageName, endStageName, nStages, ~, start_t, end_t]...
         = getActiveStageName(settings);
     if ~isempty(stageName)
@@ -154,6 +173,16 @@ for dd = 1:length(unique_datenums)
     stagenames{di} = stageName;
     stagenums(di) = stagenum;
     maxstages(di) = nStages;
+    
+    % fill in optional fields
+    for ff = 1:2:length(optfields)
+        if isfield(settings.saved, optfields{ff})
+            res.(optfields{ff+1})(di)  = settings.saved.(optfields{ff});
+        else 
+            res.(optfields{ff+1})(di) = nan;
+        end
+    end
+
 end
 
 res.start_date = start_date;
