@@ -8,6 +8,16 @@ function res = get_training_stages(ratname, start_date, varargin)
 %
 %
 
+if iscell(ratname)
+    for rr = 1:length(ratname)
+        fprintf('\nWorking on rat %i of %i...\n',rr,length(ratname))
+        tic
+        res(rr) = get_training_stages(ratname{rr}, start_date, varargin{:});
+        toc
+    end
+    return
+end
+
 % parse optional arguments
 p = inputParser;
 addParameter(p, 'end_date', [])
@@ -26,6 +36,7 @@ addParameter(p, 'settings_fields_names',...
     'DistribInterface_HitWaitDelay_Max','RewDelayMax',...
     'DistribInterface_ErrorWaitDelay_Min','ErrDelayMin',...
     'DistribInterface_ErrorWaitDelay_Max','ErrDelayMax',...
+    'SidesSection_CatchFreq','CatchFrac',...
     })
 parse(p,varargin{:})
 par = p.Results;
@@ -35,7 +46,7 @@ if isempty(savename)
     savename = [ratname '_stages.mat'];
 end
 savepath = fullfile(p.Results.savedir, savename);
-fprintf('\nLooking for saved training stages file for %i',ratname);
+fprintf('\nLooking for saved training stages file for %s',ratname);
 
 % check to see if this file alreay exists
 if exist(savepath, 'file') & ~p.Results.overwrite
