@@ -72,7 +72,8 @@ else
 end
 daynum = (1:length(datenums))';
 gooddateind = daynum >= firstgoodday & daynum <= lastgoodday;
-datex = datenums - first_datenum;
+res.gooddateind = gooddateind;
+datex = datenums - first_datenum + 1;
 
 % make plot layout
 ax = par.ax;
