@@ -53,13 +53,14 @@ fprintf('\nLooking for saved training stages file for %s',ratname);
 if exist(savepath, 'file') & ~p.Results.overwrite
     %% 
     load(savepath,'res')
+    
     if par.update
         lastday = datestr(max(res(1).datenums),29);
         newsess = bdata(['select sessid from sessions where ' ...
             'ratname="{S}" and sessiondate>"{S}"'], ratname, lastday);
         do_update = ~isempty(newsess);
     end
-    if do_update
+    if par.update & do_update
         fprintf('\n updating file to cover %i new sessions\n',length(newsess))
     else
         if isempty(start_date) 
