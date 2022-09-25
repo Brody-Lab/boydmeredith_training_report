@@ -31,4 +31,4 @@ for rr = 1:nrats
     drawnow
 end
 warning('on')
-print(f, fullfile(fig_path, ['rat_psycho_' datestr(today, 'mmddyy')]), '-dpng')
+print(fh, fullfile(fig_path, ['rat_psycho_' datestr(today, 'mmddyy')]), '-dpng')
