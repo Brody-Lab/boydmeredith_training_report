@@ -17,7 +17,9 @@ if nargin < 3
     ndays = 14;
 end
 
-sprintf('rat  prot\t\b\bday/hr\t nic  [tmin-tmax] lcb\teasy/hard  vol  rate\tnvalid(ntotal)\t perf(rbias)viol\trig\tmax/stage  ')
+haswtrat = 0;
+
+fprintf('rat  prot\t\b\bday/hr\t nic  [tmin-tmax] lcb\teasy/hard  vol  rate\tnvalid(ntotal)\t perf(rbias)viol\trig\tmax/stage  \n')
 format_str = '%s %s\t\b%i/%1.2f\t %.2f [%.1f-%.1f] %.3f\t %.1f/%.1f   %.2f  %i \t  %03i(%03i)\t   %2.f (%2.f) %2.f    \t%s\t%02i/%s\n';
 for rr = 1:length(ratnames)
     %try
@@ -93,6 +95,7 @@ for rr = 1:length(ratnames)
         bups_type   = settings.saved.PBupsSection_task_type;
         
         if strncmp(prot, 'PBupsWT',7)
+            haswtrat = 1;
             nic_dur = settings.saved.StimulusSection_NICDur;
             lcb = settings.saved.StimulusSection_LegalCBreak;
         else
@@ -120,7 +123,9 @@ for rr = 1:length(ratnames)
             easy_gamma, hard_gamma, vol, rate, n_valid(1), n_done, perf(1)*100, ...
             rbias(1)*100, viol(1)*100, hostname, nStages, stageName)
     end
-    %     catch
-    %         fprintf([ratnames{rr} ' didn''t work. did you mount the brody data?\n'])
-    %     end
+end
+
+if haswtrat
+    fprintf('\n')
+    print_wt_settings_summary(ratnames,  date_in, ndays);
 end
