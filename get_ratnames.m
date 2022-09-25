@@ -1,6 +1,6 @@
 function [ratnames, experimenter] = get_ratnames(group)
 if nargin < 1
-    group = 'active'
+    group = 'active';
 end
 switch group
     case 'wt_all'
@@ -12,10 +12,11 @@ switch group
     case 'wt_muscimol'
         ratnames = {'Z255', 'J244'};
     case 'active'
-        ratnames = {'J324','J325','J327','J328','J330','J332',...
-            'J335','J337', 'J338', 'J339', 'J340', ...
-            'J341','J342', 'J343', 'J344', 'J345', 'J346', 'J348',...
-            'J349', 'J350'};
+        recentrats = unique(bdata(['select ratname from sessions where ' ...
+            'experimenter="Tyler" and sessiondate>="{S}"'],datestr(today-7, 29)));
+        [allrats, alive] = bdata('select ratname, extant from ratinfo.rats');
+        recentalive = ismember(recentrats, allrats(find(alive)));
+        ratnames    = recentrats(recentalive);
 end
 % 
 % j_rats_2019 = {'J243', 'J244', 'J246', 'J247', 'J248','J249', 'J250',...
