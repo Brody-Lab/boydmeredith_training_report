@@ -27,6 +27,7 @@ addParameter(p, 'brodydir', '/Volumes/brody');
 addParameter(p, 'experimenter', 'Tyler');
 addParameter(p, 'savename', '');
 addParameter(p, 'overwrite', 0);
+addParameter(p, 'update', 0);
 addParameter(p, 'settings_fields_names',...
     {'PenaltySection_LegalWaitBreak','LegalWaitBreak',...
     'PenaltySection_SignalWaitViol', 'SignalWaitViol',...
@@ -52,17 +53,27 @@ fprintf('\nLooking for saved training stages file for %s',ratname);
 if exist(savepath, 'file') & ~p.Results.overwrite
     %% 
     load(savepath,'res')
-    if isempty(start_date)
-        fprintf('\nreturning existing file for this daterange');
-        return
-    elseif datenum(start_date) >= datenum(res.start_date)
-        fprintf('\nexisting file contains this daterange. returning existing file.');
-        return 
+    if par.update
+        lastday = datestr(max(res(1).datenums),29);
+        newsess = bdata(['select sessid from sessions where ' ...
+            'ratname="{S}" and sessiondate>"{S}"'], ratname, lastday);
+        do_update = ~isempty(newsess);
+    end
+    if do_update
+        fprintf('\n updating file to cover %i new sessions\n',length(newsess))
+    else
+        if isempty(start_date) 
+            fprintf('\nreturning existing file.\n');
+            return
+        elseif datenum(start_date) >= datenum(res.start_date)
+            fprintf('\nexisting file contains this daterange. returning existing file.');
+            return 
     else
        fprintf(['\nsexisting file doesn''t cover this daterange.\n'...
            'we should probably be careful about only getting the dates we don''t have '...
            'but instead we''ll just go ahead and recompute']);
-    end 
+        end 
+    end
 end
 
 % check that settings files are accessible
