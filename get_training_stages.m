@@ -22,7 +22,7 @@ end
 p = inputParser;
 addParameter(p, 'end_date', [])
 addParameter(p, 'protocols', {'ProAnti3', 'PBups', 'PBupsWT'})
-addParameter(p, 'savedir', '~/projects/rat_training/');
+addParameter(p, 'datadir', '~/projects/rat_training/data/');
 addParameter(p, 'brodydir', '/Volumes/brody');
 addParameter(p, 'experimenter', 'Tyler');
 addParameter(p, 'savename', '');
@@ -46,7 +46,7 @@ savename = p.Results.savename;
 if isempty(savename)
     savename = [ratname '_stages.mat'];
 end
-savepath = fullfile(p.Results.savedir, savename);
+savepath = fullfile(p.Results.datadir, savename);
 fprintf('\nLooking for saved training stages file for %s',ratname);
 
 % check to see if this file alreay exists
