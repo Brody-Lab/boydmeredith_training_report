@@ -7,10 +7,6 @@ function res = plot_training_stages(ratname, start_date, varargin)
 % plot_training_stages({'Z255','Z258'}, '2016-11-21', ...
 %       'protocols',  {'PBups', 'PBupsWT'}, 'experimenter', 'Tyler')
 %
-%
-% NEW USERS should make sure to change the default arguments for
-% experimenter, figsavedir, datasavedir
-
 
 p = inputParser;
 addParameter(p, 'ax', []);
@@ -19,14 +15,10 @@ addParameter(p, 'protocols', []); % a list of protocols to include in plot e.g. 
 addParameter(p, 'end_date', []);
 addParameter(p, 'list_stages', 1);
 addParameter(p, 'overwrite', 0);
-% NEW USERS SHOULD CHANGE THESE DEFAULT ARGUMENTS
-addParameter(p, 'experimenter','Tyler')
-addParameter(p, 'brodydir', '/Volumes/brody');
-addParameter(p, 'figsavedir', '~/projects/rat_training/figures');
-addParameter(p, 'datasavedir', '~/projects/rat_training/');
-%---
+addParameter(p, 'experimenter', 'Tyler')
 parse(p, varargin{:});
 par = p.Results;
+tr = train_report_config();
 fn = par.fignum;
 protocols = par.protocols;
 
@@ -34,7 +26,7 @@ if nargin < 2
     start_date = [];
 end
 
-% loop over rats if multiple
+% loop over rats if ratname is provided as cell array
 if iscell(ratname)
     nrats = length(ratname);
     for rr = 1:nrats
@@ -96,8 +88,6 @@ hold(ax,'on')
 plot(ax,datex(gooddateind&~isnan(datex)), stagenums(gooddateind&~isnan(datex)), 'k:', 'linewidth', 1.75)
 hold(ax,'on')
 plot(ax,datex(gooddateind), stagenums(gooddateind), 'k-', 'linewidth', 2)
-
-
 
 % mark protocol change dates
 not_nan = find(~isnan(res.protnums));
