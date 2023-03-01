@@ -9,7 +9,7 @@ You will need to modify `train_report_paths.m` to point to the
 relevant directories containing rat data and where you'd like to save data. 
 
 On a Mac with cup mounted, you probably want
-may be `tr.brodydir = '/Volumes/brody'`, whereas on the cluster you
+`tr.brodydir = '/Volumes/brody'`, whereas on the cluster you
 probably want `tr.brodydir = '/jukebox/brody'`.
 
 You can specify a `tr.parentsavedir` to be whereever you want. It will
