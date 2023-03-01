@@ -3,10 +3,10 @@ function tr = train_report_config()
 include_wt = false;
 
 % Path to brody lab directory on cup where data lives
-tr.brodydir = '/Volumes/brody';
+tr.brodydir = '/jukebox/brody';
 
 % Path to save new files
-tr.parentsavedir = '~/projects/rat_training';
+tr.parentsavedir = '/jukebox/brody/jtb3/projects/rat_training';
 
 tr.figsavedir = fullfile(tr.parentsavedir, 'figures');
 if exist(tr.parentsavedir, 'dir') && ~exist(tr.figsavedir, 'dir')
