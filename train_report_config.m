@@ -1,6 +1,8 @@
-function tr = train_report_config()
+function tr = train_report_config(optset)
 
-include_wt = false;
+if nargin < 1 || isempty(optset)
+    optset = 'pbups';
+end
 
 % Path to brody lab directory on cup where data lives
 tr.brodydir = '/jukebox/brody';
@@ -18,7 +20,8 @@ if exist(tr.parentsavedir, 'dir') && ~exist(tr.datasavedir, 'dir')
 end
 
 % Protocols to include in analysis
-if include_wt
+switch optset
+    case 'wt'
     tr.protocols = {'ProAnti3', 'PBups', 'PBupsWT'};
 
     % Settings fields to record
@@ -33,7 +36,7 @@ if include_wt
         'SidesSection_CatchFreq','CatchFrac',...
         };
 
-else
+    case 'pbups'
     tr.protocols = {'ProAnti3', 'PBups', 'SameDifferent', 'Classical'};
     tr.settings_fields_names = {};
 end
