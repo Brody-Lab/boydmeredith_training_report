@@ -28,13 +28,18 @@ You can specify these as an `optset` in `train_report_config.m`.
 You'll see there's already an example for the wait time protcol called
 `wt` and a minimal example for `pbups`. 
 
-To view the training history of rat B139, you can run
+To view the training history of rat B136, you can run
 
 ```matlab
 rat = 'B139';
-res = get_training_stages(rat, '', 'overwrite', 1, 'config_optset',
+start_date = '' % leaving this empty will get all sessions
+res = get_training_stages(rat, start_date, 'overwrite', 1, 'config_optset',
 'pbups');
 plot_training_stages(res);
 ``` 
+
+This will produce an image like this one
+
+![image](https://user-images.githubusercontent.com/7471909/222270642-dc6f4432-da08-4e9b-b0d1-b35516da323a.png)
 
 
