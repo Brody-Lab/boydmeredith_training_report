@@ -1,10 +1,10 @@
-function trp = train_report_paths()
+function tr = train_report_paths()
 
 % Path to brody lab directory on cup where data lives
-tr.brodydir = '/jukebox/brody';
+tr.brodydir = '/Volumes/brody';
 
 % Path to save new files
-tr.parentsavedir = '/jukebox/brody/jtb3/projects/rat_training';
+tr.parentsavedir = '~/projects/rat_training';
 
 tr.figsavedir = fullfile(tr.parentsavedir, 'figures');
 if exist(tr.parentsavedir, 'dir') && ~exist(tr.figsavedir, 'dir')

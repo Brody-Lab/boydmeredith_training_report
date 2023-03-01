@@ -80,12 +80,14 @@ if exist(savepath, 'file') && ~par.overwrite
 end
 
 % check that settings files are accessible
-settings_dir = fullfile(tr.brodydir,'RATTER/SoloData/Settings/');
-if ~exist(settings_dir,'dir')
+settings_basedir = fullfile(tr.brodydir,'RATTER/SoloData/Settings/');
+data_basedir = fullfile(tr.brodydir,'RATTER/SoloData/Data/');
+if ~exist(settings_basedir,'dir')
     error(['Can''t find ratter. is brody drive mounted? ' ...
         'Does train_report_config.m contain the right reference to brodydir?'])
 end
-settings_dir = fullfile(settings_dir, par.experimenter, ratname);
+settings_dir = fullfile(settings_basedir, par.experimenter, ratname);
+data_dir = fullfile(data_basedir, par.experimenter, ratname);
 
 % set start_date. if not supplied, will load all dates for rat
 start_datenum = [];
@@ -102,42 +104,42 @@ if ~isempty(end_datenum)
     end_datenum = datenum(end_date);
 end
 
-% build list of settings files
+% build list of data files
 fprintf(['\nhold on to your hat while we look through all '...
     'the settings files for %s '],ratname)
 if ~isempty(start_date)
     fprintf( 'between %s and %s.\n', start_date, end_date)
 end
 tic
-files = dir(fullfile(settings_dir, 'settings*'));
+files = dir(fullfile(data_dir, 'data_*mat'));
 toc
 
-settings_datelett = cellfun(@(x) get_settings_dateletter(x), {files.name},'uniformoutput',0);
-settings_dateiso = cellfun(@(x) get_settings_dateiso(x), settings_datelett, 'uniformoutput', 0);
-settings_datenum = datenum(settings_dateiso);
-settings_lett = cellfun(@(x) x(end), settings_datelett, 'uniformoutput', 0);
-settings_prot = cellfun(@(x) get_settings_protocol(x), {files.name});
+file_datelett = cellfun(@(x) get_file_dateletter(x), {files.name},'uniformoutput',0);
+file_dateiso = cellfun(@(x) get_file_dateiso(x), file_datelett, 'uniformoutput', 0);
+file_datenum = datenum(file_dateiso);
+file_lett = cellfun(@(x) x(end), file_datelett, 'uniformoutput', 0);
+file_prot = cellfun(@(x) get_file_protocol(x), {files.name});
 
 % figure out which files are from the appropriate date range and protocol
 if isempty(start_datenum) 
-    start_datenum = min(settings_datenum);
+    start_datenum = min(file_datenum);
 end
 start_date = datestr(start_datenum,29);
 
 if isempty(end_datenum)
-    end_datenum = max(settings_datenum);
+    end_datenum = max(file_datenum);
 end
 end_date = datestr(end_datenum,29);
 
 if ~isempty(par.protocols)
-    good_prot = ismember(settings_prot, par.protocols);
+    good_prot = ismember(file_prot, par.protocols);
 else
-    good_prot = true(size(settings_prot));
+    good_prot = true(size(file_prot));
 end
-good_dates = (settings_datenum >= start_datenum) & (settings_datenum <= end_datenum);
+good_dates = (file_datenum >= start_datenum) & (file_datenum <= end_datenum);
 good_files = good_dates(:) & good_prot(:);
-unique_datenums = unique(settings_datenum(good_files));
-unique_protocols = unique(settings_prot(good_files));
+unique_datenums = unique(file_datenum(good_files));
+unique_protocols = unique(file_prot(good_files));
 
 % initialize variables to store outputs
 res         = [];
@@ -164,16 +166,18 @@ for dd = 1:length(unique_datenums)
     end    
     this_date = unique_datenums(dd);
     di = datei(dd);
-    thisidx = find(settings_datenum == this_date);
+    thisidx = find(file_datenum == this_date);
     % grab file with largest final character (e.g. 161112b not 161112a)
-    [~, maxidx] = max([settings_lett{thisidx}]);
+    [~, maxidx] = max([file_lett{thisidx}]);
     thisidx = thisidx(maxidx);
     this_file = fullfile(files(thisidx).folder, files(thisidx).name);
-    settings = load(this_file, 'saved');
-    prot = get_settings_protocol(this_file);
+    warning('off')
+    data = load(this_file, 'saved');
+    warning('on')
+    prot = get_file_protocol(this_file);
     
-    [stageName, stagenum, endStageName, nStages, ~, start_t, end_t]...
-        = getActiveStageName(settings);
+    [stageName, stagenum, ~, nStages, ~, ~, ~] = getActiveStageName(data);
+    
     if ~isempty(stageName)
         stageName = sprintf('%i %s',stagenum,stageName);
 %         tempstagenum = regexp(stageName, '\d+','match'); if
@@ -218,14 +222,14 @@ end
 
 % convert the file list to dates in iso formats and the letter used to
 % determine which file is used as the settings file
-function datelett = get_settings_dateletter(name)
+function datelett = get_file_dateletter(name)
     datelett = name(regexp(name, '\d\d\d\d\d\d\S.mat')+(0:6));
 end
 
-function dateiso = get_settings_dateiso(datlett) 
+function dateiso = get_file_dateiso(datlett) 
     dateiso = sprintf('20%s-%s-%s', datlett(1:2), datlett(3:4), datlett(5:6));
 end
 
-function prot = get_settings_protocol(name)
+function prot = get_file_protocol(name)
     prot = regexp(name, '(?<=@)[^_]+(?=_)', 'match');
 end
