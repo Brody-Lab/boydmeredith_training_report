@@ -2,12 +2,16 @@ function res = get_training_stages(ratname, start_date, varargin)
 % function res = get_training_stages(ratname, start_date, varargin) Gets a
 %
 % Get a list of training stage name, number and protocol for every day from
-% start_date to now for subject ratname
+% start_date to now for subject ratname. In addition, a list of optional
+% settings variables can be added to results file. 
 %
-% res = get_training_stages('Z255', '2016-12-11','end_date','2017-12-11')
-%
+% res = get_training_stages({'Z255' 'Z256'},
+% '2016-12-11','end_date','2017-12-11'); 
+% 
+% plot_training_stages(res);
 %
 
+% If ratname is a cell, loop over the rats
 if iscell(ratname)
     for rr = 1:length(ratname)
         fprintf('\nWorking on rat %i of %i...\n',rr,length(ratname))
@@ -21,46 +25,42 @@ end
 % parse optional arguments
 p = inputParser;
 addParameter(p, 'end_date', [])
-addParameter(p, 'protocols', {'ProAnti3', 'PBups', 'PBupsWT'})
-addParameter(p, 'datadir', '~/projects/rat_training/data/');
-addParameter(p, 'brodydir', '/Volumes/brody');
-addParameter(p, 'experimenter', 'Tyler');
+addParameter(p, 'experimenter', '*'); % you can save a few seconds per rat by specifying which experimenter
 addParameter(p, 'savename', '');
 addParameter(p, 'overwrite', 0);
+addParameter(p, 'protocols', []);
 addParameter(p, 'update', 0);
-addParameter(p, 'settings_fields_names',...
-    {'PenaltySection_LegalWaitBreak','LegalWaitBreak',...
-    'PenaltySection_SignalWaitViol', 'SignalWaitViol',...
-    'PenaltySection_TerminateWaitBreak','TerminateWaitBreak',...
-    'DistribInterface_HitWaitDelay_Min','RewDelayMin',...
-    'DistribInterface_HitWaitDelay_Tau','RewDelayTau',...
-    'DistribInterface_HitWaitDelay_Max','RewDelayMax',...
-    'DistribInterface_ErrorWaitDelay_Min','ErrDelayMin',...
-    'DistribInterface_ErrorWaitDelay_Max','ErrDelayMax',...
-    'SidesSection_CatchFreq','CatchFrac',...
-    })
 parse(p,varargin{:})
 par = p.Results;
+
+% get configuration parameters
+tr = train_report_config();
+if isempty(par.protocols)
+    par.protocols = tr.protocols;
+end
+
 % set path where results should be saved
 savename = p.Results.savename;
-if isempty(savename)
-    savename = [ratname '_stages.mat'];
+if isempty(savename) 
+    savename = [ratname '_stages.mat']; 
 end
-savepath = fullfile(p.Results.datadir, savename);
-fprintf('\nLooking for saved training stages file for %s',ratname);
+savepath = fullfile(tr.datasavedir, savename);
 
-% check to see if this file alreay exists
-if exist(savepath, 'file') & ~p.Results.overwrite
-    %% 
+if par.overwrite || par.update
+    bdata_connect()
+end
+
+% check to see if this file alreay exists and decide whether to return it
+if exist(savepath, 'file') && ~par.overwrite
+    fprintf('\nLoading saved training stages file for %s',ratname);
     load(savepath,'res')
-    
     if par.update
         lastday = datestr(max(res(1).datenums),29);
         newsess = bdata(['select sessid from sessions where ' ...
             'ratname="{S}" and sessiondate>"{S}"'], ratname, lastday);
         do_update = ~isempty(newsess);
     end
-    if par.update & do_update
+    if par.update && do_update
         fprintf('\n updating file to cover %i new sessions\n',length(newsess))
     else
         if isempty(start_date) 
@@ -78,11 +78,12 @@ if exist(savepath, 'file') & ~p.Results.overwrite
 end
 
 % check that settings files are accessible
-settings_dir = fullfile(p.Results.brodydir,'RATTER/SoloData/Settings/');
+settings_dir = fullfile(tr.brodydir,'RATTER/SoloData/Settings/');
 if ~exist(settings_dir,'dir')
-    error('can''t find ratter. is brody drive mounted?')
+    error(['Can''t find ratter. is brody drive mounted? ' ...
+        'Does train_report_config.m contain the right reference to brodydir?'])
 end
-settings_dir = fullfile(settings_dir, p.Results.experimenter, ratname);
+settings_dir = fullfile(settings_dir, par.experimenter, ratname);
 
 % set start_date. if not supplied, will load all dates for rat
 start_datenum = [];
@@ -93,7 +94,6 @@ end
 if ~isempty(start_date)
     start_datenum = datenum(start_date);
 end
-
 % set end_date
 end_date = p.Results.end_date;
 if ~isempty(end_datenum)
@@ -106,15 +106,9 @@ fprintf(['\nhold on to your hat while we look through all '...
 if ~isempty(start_date)
     fprintf( 'between %s and %s.\n', start_date, end_date)
 end
-
-%% get list of all files in settings dir
+tic
 files = dir(fullfile(settings_dir, 'settings*'));
-
-% convert the file list to dates in iso formats and the letter used to
-% determine which file is used as the settings file
-get_settings_dateletter = @(name) name(regexp(name, '\d\d\d\d\d\d\S.mat')+(0:6));
-get_settings_dateiso = @(datlett) sprintf('20%s-%s-%s', datlett(1:2), datlett(3:4), datlett(5:6));
-get_settings_protocol = @(name) regexp(name, '(?<=@)[^_]+(?=_)', 'match');
+toc
 
 settings_datelett = cellfun(@(x) get_settings_dateletter(x), {files.name},'uniformoutput',0);
 settings_dateiso = cellfun(@(x) get_settings_dateiso(x), settings_datelett, 'uniformoutput', 0);
@@ -133,8 +127,8 @@ if isempty(end_datenum)
 end
 end_date = datestr(end_datenum,29);
 
-if ~isempty(p.Results.protocols)
-    good_prot = ismember(settings_prot, p.Results.protocols);
+if ~isempty(par.protocols)
+    good_prot = ismember(settings_prot, par.protocols);
 else
     good_prot = true(size(settings_prot));
 end
@@ -153,7 +147,7 @@ stagenames  = cell(ndays,1);
 prots       = cell(ndays,1);
 protnums    = nan(ndays,1);
 % initialize optional fields
-optfields   = par.settings_fields_names;
+optfields   = tr.settings_fields_names;
 for ff = 1:2:length(optfields)
     res.(optfields{ff+1}) = nan(ndays,1);
 end
@@ -176,16 +170,16 @@ for dd = 1:length(unique_datenums)
     settings = load(this_file, 'saved');
     prot = get_settings_protocol(this_file);
     
-    [stageName, endStageName, nStages, ~, start_t, end_t]...
+    [stageName, stagenum, endStageName, nStages, ~, start_t, end_t]...
         = getActiveStageName(settings);
     if ~isempty(stageName)
-        tempstagenum = regexp(stageName, '\d+','match');
-        if ~isempty(tempstagenum)
-            stagenum = str2num(tempstagenum{1});
-        else
-            stagenum = 0;
-            stageName = strcat('0 ',stageName);
-        end
+        stageName = sprintf('%i %s',stagenum,stageName);
+%         tempstagenum = regexp(stageName, '\d+','match'); if
+%         ~isempty(tempstagenum)
+%             stagenum = str2num(tempstagenum{1});
+%         else
+%             stagenum = 0; stageName = strcat('0 ',stageName);
+%         end
     else
         stageName = 'undefined';
         stagenum = -1;
@@ -208,6 +202,7 @@ for dd = 1:length(unique_datenums)
 
 end
 
+res.ratname = ratname;
 res.start_date = start_date;
 res.end_date = end_date;
 res.stagenums = stagenums;
@@ -216,3 +211,19 @@ res.datenums = datenums;
 res.prots = prots;
 res.protnums = protnums;
 save(savepath, 'res')
+
+end
+
+% convert the file list to dates in iso formats and the letter used to
+% determine which file is used as the settings file
+function datelett = get_settings_dateletter(name)
+    datelett = name(regexp(name, '\d\d\d\d\d\d\S.mat')+(0:6));
+end
+
+function dateiso = get_settings_dateiso(datlett) 
+    dateiso = sprintf('20%s-%s-%s', datlett(1:2), datlett(3:4), datlett(5:6));
+end
+
+function prot = get_settings_protocol(name)
+    prot = regexp(name, '(?<=@)[^_]+(?=_)', 'match');
+end

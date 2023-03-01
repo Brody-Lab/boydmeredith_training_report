@@ -15,12 +15,12 @@ addParameter(p, 'protocols', []); % a list of protocols to include in plot e.g. 
 addParameter(p, 'end_date', []);
 addParameter(p, 'list_stages', 1);
 addParameter(p, 'overwrite', 0);
-addParameter(p, 'experimenter', 'Tyler')
+addParameter(p, 'experimenter', '*')
 parse(p, varargin{:});
 par = p.Results;
+
 tr = train_report_config();
-fn = par.fignum;
-protocols = par.protocols;
+par = p.Results;
 
 if nargin < 2
     start_date = [];
@@ -37,12 +37,15 @@ if iscell(ratname)
     return
 end
 
-% get training stages
-par = p.Results;
-res = get_training_stages(ratname, start_date, ...
-    'experimenter', par.experimenter, 'protocols', par.protocols,...
-    'end_date', par.end_date, 'overwrite', par.overwrite, ...
-    'savedir', par.datasavedir, 'brodydir', par.brodydir);
+if isstruct(ratname)
+    res = ratname;
+    ratname = res.ratname;
+else
+    % get training stages
+    res = get_training_stages(ratname, start_date, ...
+        'experimenter', par.experimenter, 'protocols', par.protocols,...
+        'end_date', par.end_date, 'overwrite', par.overwrite);
+end
 
 % find dates from file that should be plotted
 stagenums = res.stagenums;
@@ -71,7 +74,7 @@ datex = datenums - first_datenum + 1;
 ax = par.ax;
 if isempty(ax)
     fh = figure(par.fignum); clf
-    set(fh,'position',[2 7 8 3.75],'units','inches')
+    %set(fh,'position',[2 7 8 3.75],'units','inches')
     ax = axes('position',[.1 .2 .75 .7]);  
     
     if par.list_stages
@@ -157,9 +160,9 @@ end
 
 end
 
-if ~isempty(par.figsavedir)
+if ~isempty(tr.figsavedir)
     fpos = get(fh,'position');
-    set(fh,'paperpositionmode','auto','papersize',fpos(3:4)*1.25,'units','inches')
+    set(fh,'paperpositionmode','auto','papersize',fpos(3:4)*1.25,'units','inches','color','w')
     figsavename = sprintf('%s_stages.pdf',ratname);
-    print(fh, fullfile(par.figsavedir, figsavename), '-dpdf')
+    print(fh, fullfile(tr.figsavedir, figsavename), '-dpdf')
 end

@@ -1,4 +1,4 @@
-function [activeStageName, finalStageName, nStages, prot, start_t,end_t]...
+function [activeStageName, activeStagenum, finalStageName, nStages, prot, start_t, end_t]...
     = getActiveStageName(settings)
 prot = '       ';
 savedsettings = settings.saved;
@@ -35,6 +35,7 @@ if ~isempty(savedsettings.SessionDefinition_training_stages)
     end
 else
     activeStageName='';
+    activeStagenum=[];
     finalStageName = '';
     nStages = 0;
     rigstr = '';
