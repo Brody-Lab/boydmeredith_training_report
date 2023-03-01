@@ -27,14 +27,16 @@ p = inputParser;
 addParameter(p, 'end_date', [])
 addParameter(p, 'experimenter', '*'); % you can save a few seconds per rat by specifying which experimenter
 addParameter(p, 'savename', '');
+addParameter(p, 'reload', 1);
 addParameter(p, 'overwrite', 0);
 addParameter(p, 'protocols', []);
 addParameter(p, 'update', 0);
+addParameter(p, 'config_optset', 'pbups')
 parse(p,varargin{:})
 par = p.Results;
 
 % get configuration parameters
-tr = train_report_config();
+tr = train_report_config(par.config_optset);
 if isempty(par.protocols)
     par.protocols = tr.protocols;
 end
