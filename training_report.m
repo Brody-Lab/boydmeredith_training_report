@@ -1,4 +1,4 @@
-function training_report()
+function training_report(ratnames)
 % function training_report()
 %
 % 

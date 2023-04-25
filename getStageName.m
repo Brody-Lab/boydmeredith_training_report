@@ -29,7 +29,7 @@ if isempty(settings)
     return
 end
 
-[stageName, endStageName, nStages, ~, start_t, end_t]...
+[activeStageName, activeStagenum, finalStageName, nStages, prot, start_t, end_t]...
     = getActiveStageName(settings);
 
 theDate = datenum(datestr(theDate,29));

@@ -23,7 +23,8 @@ fprintf('rat  prot\t\b\bday/hr\t nic  [tmin-tmax] lcb\teasy/hard  vol  rate\tnva
 format_str = '%s %s\t\b%i/%1.2f\t %.2f [%.1f-%.1f] %.3f\t %.1f/%.1f   %.2f  %i \t  %03i(%03i)\t   %2.f (%2.f) %2.f    \t%s\t%02i/%s\n';
 for rr = 1:length(ratnames)
     %try
-    [settings, stageName, the_date, endStageName, nStages, prot, start_t, end_t]=...
+    [settings, stageName, the_date, endStageName, nStages, prot,...
+    start_t, end_t]=...
         getStageName(ratnames{rr},[],ndays);
     
     if isempty(settings)
@@ -111,7 +112,7 @@ for rr = 1:length(ratnames)
         lcb     = settings.saved.ProAnti3_LegalCBrk;
     end
     
-    if ~isempty(end_t)
+    if ~isempty(end_t)  
         elapsed_t = (hour(end_t)-hour(start_t)) + (minute(end_t)-minute(start_t))/60;
     else
         elapsed_t = 0;
